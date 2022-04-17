@@ -79,4 +79,5 @@ Alright,
 *More*:
 - [https://developer.apple.com/swift/blog/?id=10]()
 - [https://stackoverflow.com/questions/43486408/does-swift-copy-on-write-for-all-structs](https://stackoverflow.com/questions/43486408/does-swift-copy-on-write-for-all-structs)
+- https://stackoverflow.com/questions/46747363/how-to-prove-copy-on-write-on-string-type-in-swift
 - https://jaredkhan.com/blog/swift-copy-on-write
