@@ -286,3 +286,4 @@ Learned from:
 - https://www.avanderlee.com/swift/weak-self/
 - https://www.swiftbysundell.com/articles/capturing-objects-in-swift-closures/
 - https://www.swiftbysundell.com/questions/is-weak-self-always-required/
+- https://alisoftware.github.io/swift/closures/2016/07/25/closure-capture-1/
