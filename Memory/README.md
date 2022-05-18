@@ -234,6 +234,24 @@ func leakyDispatchQueue() {
 }
 ```
 
+##### Alternatives to `weak`
+- Define a tuple which contains only objects needed for the closure
+```swift
+let context = (
+    parser: parser,
+    schema: schema,
+    titleLabel: titleLabel,
+    textLabel: textLabel
+)
+
+dataLoader.loadData(from: url) { data in
+    // We can now use the context instead of having to capture 'self'
+    let model = try context.parser.parse(data, using: context.schema)
+    context.titleLabel.text = model.title
+    context.textLabel.text = model.text
+}
+```
+
 
 
 Learned from:
