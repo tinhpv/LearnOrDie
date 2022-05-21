@@ -1,4 +1,29 @@
-TL;DR
+PROBLEM:
+```swift
+class ProductViewController: UIViewController {
+    private lazy var buyButton = Button()
+    private let purchaseController: PurchaseController
+    
+    ...
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+
+        // Since our buyButton retains its closure, and our
+        // view controller in turn retains that button, we'll
+        // end up with a retain cycle by capturing self here:
+        buyButton.handler = {
+            self.showShoppingCart()
+            self.purchaseController.startPurchasingProcess()
+        }
+    }
+
+    private func showShoppingCart() {
+        ...
+    }
+}
+```
+
 There are two main reasons `weak` is useful:
 - To prevent retain cycles.
 - To prevent objects living longer than they should be.
@@ -234,6 +259,24 @@ func leakyDispatchQueue() {
 }
 ```
 
+##### Alternatives to `weak`
+- Define a tuple which contains only objects needed for the closure
+```swift
+let context = (
+    parser: parser,
+    schema: schema,
+    titleLabel: titleLabel,
+    textLabel: textLabel
+)
+
+dataLoader.loadData(from: url) { data in
+    // We can now use the context instead of having to capture 'self'
+    let model = try context.parser.parse(data, using: context.schema)
+    context.titleLabel.text = model.title
+    context.textLabel.text = model.text
+}
+```
+
 
 
 Learned from:
@@ -242,3 +285,5 @@ Learned from:
 - https://medium.com/@almalehdev/you-dont-always-need-weak-self-a778bec505ef
 - https://www.avanderlee.com/swift/weak-self/
 - https://www.swiftbysundell.com/articles/capturing-objects-in-swift-closures/
+- https://www.swiftbysundell.com/questions/is-weak-self-always-required/
+- https://alisoftware.github.io/swift/closures/2016/07/25/closure-capture-1/
