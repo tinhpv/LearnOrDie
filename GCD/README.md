@@ -23,7 +23,8 @@ URLSession.shared.dataTask(with: url) { data, response, error in
 ```
 ----
 ### Serial queue
-- a serial queue is created, and a task is dispatched to that queue, system creates one thread for it and it is independent with other serial queues. For example, 2 serial queues are created, started at the same time, will start running simultaneously.
+- a serial queue is created, and a task is dispatched to that queue, system creates one thread for it and it is independent with other serial queues. 
+- For example, 2 serial queues are created, started at the same time, will start running simultaneously.
 
 ```swift
 let serial1 = DispatchQueue(label: "tinhpv.serial1")
@@ -51,8 +52,8 @@ serial2.async {
 🔵
 🔵
 ```
-want the first queue to be done first then the next queue execute their task? → use `sync`, but it will block the caller.
-another way? → use one single queue for 2 tasks.
+- want the first queue to be done first then the next queue execute their task? → use `sync`, but it will block the caller.
+- another way? → use one single queue for 2 tasks.
 ```swift
 serial1.async {
     for _ in 0..<5 { print("🔵") }
