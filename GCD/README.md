@@ -1,5 +1,4 @@
-### Grand Central Dispatch (GCD)
----
+## Grand Central Dispatch (GCD)
 - GCD helps to write multi-threaded code, create threads and schedule tasks on those threads.
 - Main building block: **Dispatch Queues**, 3 types of queues:
 	- **Main dispatch queue** (serial, pre-defined)
@@ -23,7 +22,7 @@ URLSession.shared.dataTask(with: url) { data, response, error in
 }
 ```
 ----
-#### Serial queue
+### Serial queue
 - a serial queue is created, and a task is dispatched to that queue, system creates one thread for it and it is independent with other serial queues. For example, 2 serial queues are created, started at the same time, will start running simultaneously.
 
 ```swift
@@ -77,7 +76,7 @@ serial1.async {
 ```
 
 ----
-#### sync vs async - concurrent vs. serial
+### sync vs async - concurrent vs. serial
 sync/async and concurrent/serial are two **SEPARATE** concepts.
 - Synchronous vs. asynchronous is about when THE CALLER (the queue) can continue. 
 	- `sync` **block** the *current queue* until that task completes. Once the current task is completes/returns, another task can be dispatched to the queue.
@@ -165,7 +164,7 @@ concurrentQueue.async { // ← try to dispatch a task to the queue while it exec
 🔴
 ```
 ---
-#### Priority Inversion
+### Priority Inversion
 - a high priority task is prevented from running by a lower priority task
 - often occurs when a high QoS queue shares a resources with a low QoS queue, and the low QoS queue gets a lock on that resource
 
@@ -212,7 +211,7 @@ starterQueue.async {
 → background queue is now having high priority than the other (utility)
 
 ---
-#### Thread explosion 
+### Thread explosion 
 - try to submit tasks to a concurrent queue that is currently blocked (e.g. with a semaphore, sync, or some other way.) 
 - These tasks will run, but the system will likely end up spinning up new threads to accommodate these new tasks.
 - Apple suggests starting with a serial queue per subsystem in your app, as each serial queue can only use one thread at a time.
@@ -220,7 +219,7 @@ starterQueue.async {
 > Serial queues are concurrent in relation to other queues, so you still get a performance benefit when you offload your work to a queue, even if it isn't concurrent.
 
 ---
-#### Race condition 
+### Race condition 
 - Readers-writers problem
 e.g: multiple threads access/modify the same resource (as an array, a file)
 
@@ -250,7 +249,7 @@ could use a serial queue without a barrier to solve the race condition
 but then we would lose the advantage of having concurrent read access to the array.
 ---
 
-#### Summary - pros and cons
+### Summary - pros and cons
 - to make the app highly responsive.
 - on OSX and iOS, the main loop, called RunLoop on the main thread, should not be blocked - only the main thread can update UI. When it is blocked, UI is not updated and the same still image is displayed for quite a long time → frozen 🥶
 
