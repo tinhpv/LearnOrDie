@@ -276,4 +276,5 @@ Learned from:
 - https://medium.com/@almalehdev/concurrency-visualized-part-3-pitfalls-and-conclusion-2b893e04b97d
 - https://developer.apple.com/forums/thread/106319
 - https://stackoverflow.com/questions/71233769/why-concurrent-queue-with-sync-act-like-serial-queue
-- https://stackoverflow.com/a/58238703
+- https://stackoverflow.com/a/58238703 (barrier, Rob)
+- https://stackoverflow.com/a/54101127 (barrier)
