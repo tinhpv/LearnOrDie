@@ -235,6 +235,8 @@ use `barrier flag` - whether it’s allowed to run concurrently with any other d
 > - All blocks submitted AFTER the barrier will not start until the barrier has finished.
 
 ⛔️ **Barriers do not work on global queues; they only affect private concurrent queues that you created** ⛔️
+Why?
+> → Global queues are shared. You’re not the only one possibly availing yourself of these queues. Other subsystems in your app might be using them. The OS might, too. And barriers are a blocking operation, which could have serious impact if they started blocking unrelated systems. It seems exceeding prudent to me that GCD prevents one a bit of code in one subsystem from blocking all the other completely unrelated subsystems
 
 ```swift
 let isolation = DispatchQueue(label: "queue.isolation", attributes: .concurrent)
@@ -274,3 +276,4 @@ Learned from:
 - https://medium.com/@almalehdev/concurrency-visualized-part-3-pitfalls-and-conclusion-2b893e04b97d
 - https://developer.apple.com/forums/thread/106319
 - https://stackoverflow.com/questions/71233769/why-concurrent-queue-with-sync-act-like-serial-queue
+- https://stackoverflow.com/a/58238703
