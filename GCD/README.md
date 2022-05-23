@@ -77,7 +77,7 @@ serial1.async {
 ```
 
 ----
-### sync vs async - concurrent vs. serial
+### sync/async vs. concurrent/serial
 sync/async and concurrent/serial are two **SEPARATE** concepts.
 - Synchronous vs. asynchronous is about when THE CALLER (the queue) can continue. 
 	- `sync` **block** the *current queue* until that task completes. Once the current task is completes/returns, another task can be dispatched to the queue.
@@ -220,7 +220,7 @@ starterQueue.async {
 > Serial queues are concurrent in relation to other queues, so you still get a performance benefit when you offload your work to a queue, even if it isn't concurrent.
 
 ---
-### Race condition 
+### Race Condition, Solved By Dispatch Barrier
 - Readers-writers problem
 e.g: multiple threads access/modify the same resource (as an array, a file)
 
