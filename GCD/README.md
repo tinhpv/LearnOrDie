@@ -245,9 +245,9 @@ var threadSafeArray: [Int] {
         }
 }
 ```
-
 could use a serial queue without a barrier to solve the race condition
 but then we would lose the advantage of having concurrent read access to the array.
+
 ---
 
 ### Summary - pros and cons
