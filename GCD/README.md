@@ -109,8 +109,7 @@ queue.sync { // (1) submit a task synchronously into the queue
 - "SYNCHRONOUSLY" = first task have to DONE so that the next task can be dispatched to the queue.
 - so, second task DOES NOT return because it's waiting for the first task to be done.
 - also, this is a SERIAL queue, have to execute tasks in order (first task have to be done > second task could starts)
-- ... and the first task canNOT be done because of the second task.
-- 1st task waits for 2nd task and conversely. >>> DEADLOCK!
+- the first can’t finish because it’s waiting for the second to finish, but the second can’t finish because it’s waiting for the first to finish.
 
 Another one:
 ```swift
@@ -225,16 +224,24 @@ starterQueue.async {
 e.g: multiple threads access/modify the same resource (as an array, a file)
 
 One of solutions: using an isolation queue
-use `barrier flag`:
-- This flag allows any outstanding tasks on the queue to finish
-- blocks any further tasks from executing until the barrier task is completed
+use `barrier flag` - whether it’s allowed to run concurrently with any other dispatched blocks to that queue
+- submitting a task without barrier flag, the queue works as a normal concurrent queue
+- when the barrier is executing, it is working as a serial queue.
+- blocks any further tasks from executing until the barrier task is completed.
+- use `barrier` flag on a serial queue is redundant 🤷‍♂️
+
+> A block submitted with this flag will act as a barrier: 
+> - All other blocks that were submitted BEFORE the barrier will finish and only then the barrier block will execute.
+> - All blocks submitted AFTER the barrier will not start until the barrier has finished.
+
+⛔️ **Barriers do not work on global queues; they only affect private concurrent queues that you created** ⛔️
 
 ```swift
 let isolation = DispatchQueue(label: "queue.isolation", attributes: .concurrent)
 private var _array = [1,2,3,4,5]
 var threadSafeArray: [Int] {
        get {
-            return isolation.sync {
+            return isolation.sync { // ← don't let another task asynchronously cut
                 _array
             }
         }
