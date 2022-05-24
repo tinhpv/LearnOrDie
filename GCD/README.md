@@ -289,7 +289,7 @@ semaphore.wait()
 ```
 - `wait()` → asking for accessing shared resource 🙋🏼‍♂️
 	- `value--` decrement the value by 1
-	- if the `value` *after decrementing* < 0, this thread will sleep and wait.
+	- if the `value` *after decrementing* < 0, this thread will be block ❌ → don't call on main thread 
 	- if the `value` *after incrementing* ≥ 0, no need to wait, go ahead and execute. 🏃🏻‍♀️
 	
 - `signal()` → announce that we are done working with the shared resource
