@@ -272,6 +272,107 @@ but then we would lose the advantage of having concurrent read access to the arr
 
 ---
 
+### Dispatch Semaphore
+- control access to a shared resource by multiple threads
+- block a thread for an amount of time, until a single from another thread is posted. 
+- thread-safe, can be triggered from anywhere
+
+```swift
+// on a background queue
+let semaphore = DispatchSemaphore(value: 0)
+doSomeExpensiveWorkAsynchronously(completionBlock: {
+	semaphore.signal()
+})
+semaphore.wait()
+//the expensive asynchronous work is now done
+```
+- `wait()` → asking for accessing shared resource 🙋🏼‍♂️
+	- `value--` decrement the value by 1
+	- if the `value` *after decrementing* < 0, this thread will sleep and wait.
+	- if the `value` *after incrementing* ≥ 0, no need to wait, go ahead and execute. 🏃🏻‍♀️
+	
+- `signal()` → announce that we are done working with the shared resource
+	- `value++`, increment the value by 1
+	- if the `value` *before incrementing* < 0, it will wake the oldest thread that are waiting...
+	- if the `value` *before incrementing* ≥ 0, no thread is waiting
+
+Example:
+```swift
+let queue = DispatchQueue(label: "com.gcd.concurrent", attributes: .concurrent)
+let semaphore = DispatchSemaphore(value: 3) // ← allow to run 3 threads at a time.
+for i in 0...15 {
+   queue.async {
+      let songNumber = i + 1
+      semaphore.wait()
+      print("Downloading song", songNumber)
+      sleep(2)
+      print("Downloaded song", songNumber)
+      semaphore.signal()
+   }
+}
+
+/// CONSOLE
+Downloading song 1
+Downloading song 2
+Downloading song 4 
+Downloaded song 1
+Downloaded song 4
+Downloaded song 2 // done first 3
+Downloading song 3
+Downloading song 6
+Downloading song 5
+Downloaded song 3
+Downloaded song 5
+Downloaded song 6 // done next 3 songs
+Downloading song 8
+Downloading song 9
+Downloading song 7
+Downloaded song 7
+Downloaded song 9
+Downloaded song 8 // ... bla bla bla
+Downloading song 10
+Downloading song 12
+Downloading song 11
+Downloaded song 11
+Downloaded song 10
+Downloaded song 12
+Downloading song 13
+Downloading song 15
+Downloading song 14
+```
+
+**NOTE:**
+- ⚠️ **NEVER** call `wait()` on MAIN THREAD → app will freeze 🥶 only from background threads.
+- can pass a timeout to `wait()`
+- can help in limiting the number of concurrent blocks:
+```swift
+class LimitedWorker {
+    private let serialQueue = DispatchQueue(label: "com.khanlou.serial.queue")
+    private let concurrentQueue = DispatchQueue(label: "com.khanlou.concurrent.queue", attributes: .concurrent)
+    private let semaphore: DispatchSemaphore
+
+    init(limit: Int) {
+        semaphore = DispatchSemaphore(value: limit)
+    }
+
+    func enqueue(task: @escaping () -> ()) {
+        serialQueue.async(execute: {
+            self.semaphore.wait()
+            self.concurrentQueue.async(execute: {
+                task()
+                self.semaphore.signal()
+            })
+        })
+    }
+}
+```
+- a concurrent queue for executing the user’s tasks, allowing as many concurrently executing tasks as GCD will allow us in that queue
+- a serial queue and acts as "a gatekeeper" to the concurrent queue.
+- `wait` on the semaphore in the serial queue, which means that we'll have AT MOST one blocked thread when we reach maximum executing blocks on the concurrent queue. 
+- Any other tasks the user enqueues will sit on the serial queue waiting to be executed, and **won't cause new threads to be started.**
+
+---
+
 ### Summary - pros and cons
 - to make the app highly responsive.
 - on OSX and iOS, the main loop, called RunLoop on the main thread, should not be blocked - only the main thread can update UI. When it is blocked, UI is not updated and the same still image is displayed for quite a long time → frozen 🥶
@@ -283,6 +384,8 @@ BUT...
 
 
 Learned from:
+- https://gist.github.com/tclementdev/6af616354912b0347cdf6db159c37057 (tips on GCD)
+- https://khanlou.com/2016/04/the-GCD-handbook/
 - https://www.avanderlee.com/swift/concurrent-serial-dispatchqueue/
 - https://www.donnywals.com/understanding-how-dispatchqueue-sync-can-cause-deadlocks/
 - https://medium.com/@almalehdev/concurrency-visualized-part-2-serial-vs-concurrent-fd04e32c20a9
@@ -291,3 +394,4 @@ Learned from:
 - https://stackoverflow.com/questions/71233769/why-concurrent-queue-with-sync-act-like-serial-queue
 - https://stackoverflow.com/a/58238703 (barrier, Rob)
 - https://stackoverflow.com/a/54101127 (barrier)
+- https://medium.com/@roykronenfeld/semaphores-in-swift-e296ea80f860 (semaphore)
