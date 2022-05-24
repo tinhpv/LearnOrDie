@@ -1,15 +1,15 @@
 ## Grand Central Dispatch (GCD)
 
 ### Content:
-1. [Overview](https://github.com/tinhpv/learning-ios/tree/main/GCD#overviewqueue "Overview") 
-2. [Serial Queue](https://github.com/tinhpv/swift-note-down/tree/main/GCD#serial-queue "Serial Queue")
-3. [sync/async vs. concurrent/serial](https://github.com/tinhpv/swift-note-down/tree/main/GCD#syncasync-vs-concurrentserial "sync/async vs. concurrent/serial")
-4. [Priority Inversion](https://github.com/tinhpv/swift-note-down/tree/main/GCD#priority-inversion "Priority Inversion")
-5. [Thread Explosion](https://github.com/tinhpv/swift-note-down/tree/main/GCD#thread-explosion "Thread Explosion") 
-6. [Race condition, solved by Dispatch Barrier](https://github.com/tinhpv/swift-note-down/tree/main/GCD#race-condition-solved-by-dispatch-barrier "Race condition, solved by Dispatch Barrier")
-7. [DispatchSemaphore](https://github.com/tinhpv/swift-note-down/blob/main/GCD/README.md#dispatch-semaphore "Dispatch Semaphore") 
-8. [DispatchGroup](https://github.com/tinhpv/swift-note-down/blob/main/GCD/README.md#dispatchgroup "DispatchGroup")
-9. [Summary](https://github.com/tinhpv/swift-note-down/tree/main/GCD#summary---pros-and-cons "Summary")
+1. [Overview](#overview) 
+2. [Serial Queue](#serial-queue)
+3. [sync/async vs. concurrent/serial](#syncasync-vs-concurrentserial)
+4. [Priority Inversion](#priority-inversion)
+5. [Thread Explosion](#thread-explosion) 
+6. [Race condition, solved by Dispatch Barrier](#race-condition-solved-by-dispatch-barrier)
+7. [DispatchSemaphore](#dispatch-semaphore) 
+8. [DispatchGroup](#dispatchgroup)
+9. [Summary](#summary)
 
 ---
 
