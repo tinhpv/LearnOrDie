@@ -1,4 +1,17 @@
 ## Grand Central Dispatch (GCD)
+
+### Content:
+1. [Overview](https://github.com/tinhpv/learning-ios/tree/main/GCD#overviewqueue "Overview") 
+2. [Serial Queue](https://github.com/tinhpv/swift-note-down/tree/main/GCD#serial-queue "Serial Queue")
+3. [sync/async vs. concurrent/serial](https://github.com/tinhpv/swift-note-down/tree/main/GCD#syncasync-vs-concurrentserial "sync/async vs. concurrent/serial")
+4. [Priority Inversion](https://github.com/tinhpv/swift-note-down/tree/main/GCD#priority-inversion "Priority Inversion")
+5. [Thread Explosion](https://github.com/tinhpv/swift-note-down/tree/main/GCD#thread-explosion "Thread Explosion") 
+6. [Race condition, solved by Dispatch Barrier](https://github.com/tinhpv/swift-note-down/tree/main/GCD#race-condition-solved-by-dispatch-barrier "Race condition, solved by Dispatch Barrier")
+7. [Summary](https://github.com/tinhpv/swift-note-down/tree/main/GCD#summary---pros-and-cons "Summary")
+
+---
+
+### Overview
 - GCD helps to write multi-threaded code, create threads and schedule tasks on those threads.
 - Main building block: **Dispatch Queues**, 3 types of queues:
 	- **Main dispatch queue** (serial, pre-defined)
