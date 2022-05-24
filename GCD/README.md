@@ -7,8 +7,9 @@
 4. [Priority Inversion](https://github.com/tinhpv/swift-note-down/tree/main/GCD#priority-inversion "Priority Inversion")
 5. [Thread Explosion](https://github.com/tinhpv/swift-note-down/tree/main/GCD#thread-explosion "Thread Explosion") 
 6. [Race condition, solved by Dispatch Barrier](https://github.com/tinhpv/swift-note-down/tree/main/GCD#race-condition-solved-by-dispatch-barrier "Race condition, solved by Dispatch Barrier")
-7. [Dispatch Semaphore](https://github.com/tinhpv/swift-note-down/blob/main/GCD/README.md#dispatch-semaphore "Dispatch Semaphore") 
-8. [Summary](https://github.com/tinhpv/swift-note-down/tree/main/GCD#summary---pros-and-cons "Summary")
+7. [DispatchSemaphore](https://github.com/tinhpv/swift-note-down/blob/main/GCD/README.md#dispatch-semaphore "Dispatch Semaphore") 
+8. [DispatchGroup](https://github.com/tinhpv/swift-note-down/blob/main/GCD/README.md#dispatchgroup "DispatchGroup")
+9. [Summary](https://github.com/tinhpv/swift-note-down/tree/main/GCD#summary---pros-and-cons "Summary")
 
 ---
 
