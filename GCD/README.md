@@ -287,6 +287,7 @@ doSomeExpensiveWorkAsynchronously(completionBlock: {
 semaphore.wait()
 //the expensive asynchronous work is now done
 ```
+- `value`, counter, the number of available resources
 - `wait()` → asking for accessing shared resource 🙋🏼‍♂️
 	- `value--` decrement the value by 1
 	- if the `value` *after decrementing* < 0, this thread will be block ❌ → don't call on main thread 
