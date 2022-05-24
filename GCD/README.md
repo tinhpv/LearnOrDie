@@ -268,6 +268,9 @@ var threadSafeArray: [Int] {
         }
 }
 ```
+> While this code will definitely work, using async for writes can be counter-intuitively be less performant. async calls will create a new thread, if there isn’t one immediately available to run the block. If your write call is faster than 1ms, it might be worth making it .sync, [according to Pierre Habouzit](https://mobile.twitter.com/pedantcoder/status/1081657739451891713 "according to Pierre Habouzit"), who worked on this code at Apple. As always, profile before optimizing!
+
+
 could use a serial queue without a barrier to solve the race condition
 but then we would lose the advantage of having concurrent read access to the array.
 
@@ -372,6 +375,44 @@ class LimitedWorker {
 - a serial queue and acts as "a gatekeeper" to the concurrent queue.
 - `wait` on the semaphore in the serial queue, which means that we'll have AT MOST one blocked thread when we reach maximum executing blocks on the concurrent queue. 
 - Any other tasks the user enqueues will sit on the serial queue waiting to be executed, and **won't cause new threads to be started.**
+
+---
+
+### DispatchGroup 
+→ helpful when execute some tasks, want to wait for ALL tasks to be completed.
+```swift
+llet backgroundQueue = DispatchQueue(label: "com.concurrent.queue", attributes: .concurrent)
+let group = DispatchGroup()
+for item in 1...5 {
+    backgroundQueue.async(group: group) {
+        sleep(UInt32(item))
+    }
+}
+
+group.notify(queue: .main) {
+    print("all tasks have been done! ✅")
+}
+```
+
+more manual way with `enter()` and `leave()`:
+```swift
+...
+for item in 1...5 {
+    group.enter()
+    backgroundQueue.async {
+        sleep(UInt32(item))
+        group.leave()
+    }
+}
+
+group.notify(queue: .main) {
+    print("all tasks have been done! ✅")
+}
+```
+- group also maintain a thread-safe, internal counter that you can manipulate
+- this counter is to make sure multiple long running tasks are ALL COMPLETED before executing a completion block
+- `enter()`, increment the counte, `leave()`, decrement the counter
+- can use `wait()` instead of `notify()`, but it will block the thread until ALL tasks finished. So, DON'T call `wait` on main thread.
 
 ---
 
