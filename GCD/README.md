@@ -258,7 +258,7 @@ let isolation = DispatchQueue(label: "queue.isolation", attributes: .concurrent)
 private var _array = [1,2,3,4,5]
 var threadSafeArray: [Int] {
        get {
-            return isolation.sync { // ← don't let another task asynchronously cut
+            return isolation.sync { // ← need to wait the result, if `async`, it returns immediately
                 _array
             }
         }
