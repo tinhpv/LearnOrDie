@@ -30,7 +30,7 @@ func download(url: URL) async throws -> Data {
 e.g. call `download(from:)` in `viewDidLoad()` of `UIViewController`
 
 👇
-### Tasks
+## Tasks
 This is `a unit of asynchronous work`
 ```swift
 override func viewDidLoad() {
@@ -52,16 +52,16 @@ override func viewDidLoad() {
         let result = try await URLSession.shared.data(from: url)
         return result.0 // the response data
     }
-    
-    ///  CONSOLE
-    https://cdn.pixabay.com/photo/2015/04/23/22/00/tree-736885__480.jpg
-    44304 bytes
+	
+	///  CONSOLE
+	https://cdn.pixabay.com/photo/2015/04/23/22/00/tree-736885__480.jpg
+	44304 bytes
 ```
 
 **Want to adopt structured concurrency but keep old-fashioned async code based on completion handler?**
 
 👇
-### Wrapping a Completion Handler
+## Wrapping a Completion Handler
 
 wrapping with 
 -  `withUnsafeContinuation(_:)`
@@ -96,7 +96,7 @@ override func viewDidLoad() {
 //        return result.0 // the response data
     }
     
-    // The old-fashion async functino with completion handler
+	// The old-fashion async functino with completion handler
     func download(url: URL, completionHandler: @escaping (Data) -> ()) {
         let task = URLSession.shared.dataTask(with: url) { data, _, error in
             if let data = data {
@@ -110,6 +110,127 @@ override func viewDidLoad() {
 - when we wait for an async function call using `await`, a continuation object is created and stored behind the scenes 
 - when the async function finishes, a method of that continuation object is called, and our code resumes. So what we’re doing in this wrapper method is enacting manually the same sort of wait-and-resume architecture that is performed for us automatically when we say `await`.
 
+## Do multiple concurrent tasks with `async let`
+Don't do this, it is serial, not concurrent:
+```swift
+func fetchTwoURLs() async throws -> (Data, Data) {
+    let url1 = URL(string:"https://www.apeth.com/pep/manny.jpg")!
+    let url2 = URL(string:"https://www.apeth.com/pep/moe.jpg")!
+    let data1 = try await self.download(url: url1)
+    let data2 = try await self.download(url: url2) /// 😢 this one waits for the above ☝ to be done 
+    return (data1, data2)
+}
+```
+Do this instead, using `async let`:
+```swift
+func fetchTwoURLs() async throws -> (Data, Data) {
+    let url1 = URL(string:"https://www.tinhpv.com/pep/manny.jpg")!
+    let url2 = URL(string:"https://www.tinh.com/pep/moe.jpg")!
+    async let data1 = self.download(url: url1) /// (1)
+    async let data2 = self.download(url: url2) /// (2)
+    return (try await data1, try await data2) /// try wait (data1, data2)
+}
+```
+- *when we know the number of tasks to do* (if perform an indeterminate number of tasks, use task group)
+- Useful when we want to return the results of both `download(url:)` calls as a single result. Both calls need to finish before return statement.
+- ⚠️ if the `async` function throws an error, it does NOT interrupt code. For e.g., when (1) fails, throws error, (2) still goes ahead and still be awaited. The thrown error from the subtask doesn't interrupt our code until later, when we use `try`.
+
+another style for writing `async let`:
+```swift
+func fetchTwoURLs() async throws -> (Data, Data) {
+    let url1 = URL(string:"https://www.tinhpv.com/pep/manny.jpg")!
+    let url2 = URL(string:"https://www.tinh.com/pep/moe.jpg")!
+//    async let data1 = self.download(url: url1) /// (1)
+//    async let data2 = self.download(url: url2) /// (2)
+
+	   async let data1 = {
+            return try await download(url: url1)
+        }()
+        
+        async let data2 = {
+            return try await download(url: url2)
+        }()
+
+    return (try await data1, try await data2) /// try wait (data1, data2)
+}
+```
+
+## Task Groups
+use 1 of these 2 methods:
+- `withTaskGroup(of:returning:body:)`
+- `withThrowingTaskGroup(of:returning:body:)`
+e.g.:
+```swift
+func fetchData(from urls: [URL]) async throws -> [Data] {
+        var result: [Data] = []
+		
+        try await withThrowingTaskGroup(of: Data.self) { group in
+            for url in urls {
+                group.addTask {
+                    return try await self.download(url: url)
+                }
+            }
+            
+			// loop through the group as an async sequence
+			// get the value from each subtasks and append to the list result.
+            for try await data in group {
+                result.append(data)
+            }
+        }
+        return result
+    }
+```
+... But result is not in order as the url array that being passed in because it is concurrent.
+so rather than return an array, we return a dictionary.
+```swift
+func fetchData(from urls: [URL]) async throws -> [URL: Data] {
+        var result: [URL: Data] = [:]
+        
+        try await withThrowingTaskGroup(of: [URL: Data].self) { group in
+            for url in urls {
+                group.addTask {
+                    // this return here have to match with `of` type
+                    return [url: try await self.download(url: url)]
+                }
+            }
+            
+            for try await dictionaryData in group {
+                // merge dictionaryData to result dictionary
+                // if there is a duplicate key, keep the key of result
+                result.merge(dictionaryData) { current, _ in current }
+            }
+        }
+        
+        return result
+    }
+```
+A cleaner code 🐣
+```swift
+func fetchData(from urls: [URL]) async throws -> [URL: Data] {
+    var result: [URL: Data] = [:]
+    return try await withThrowingTaskGroup(of: [URL: Data].self, returning: [URL: Data].self) { group in
+        for url in urls {
+            group.addTask {
+                // this return here have to match with `of` type
+                return [url: try await self.download(url: url)]
+            }
+        }
+            
+        for try await dictionaryData in group {
+            // merge dictionaryData to result dictionary
+            // if there is a duplicate key, keep the key of result
+            result.merge(dictionaryData) { current, _ in current }
+        }
+            
+        return result
+    }    
+       
+}
+        
+```
+- specify `returning`, denoting that this block will return with the type of `returning` ([URL: Data] dictionary as above)
+
 Learned from
 1. https://docs.swift.org/swift-book/LanguageGuide/Concurrency.html
 2. https://www.avanderlee.com/swift/async-await/
+3. https://www.avanderlee.com/swift/async-let-asynchronous-functions-in-parallel/
