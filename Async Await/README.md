@@ -64,7 +64,7 @@ override func viewDidLoad() {
 ## Wrapping a Completion Handler
 
 wrapping with 
--  `withUnsafeContinuation(_:)`
+- `withUnsafeContinuation(_:)`
 - `withUnsafeThrowingContinuation(_:)`
 - `withCheckedContinuation(_:)`
 - `withCheckedThrowingContinuation(_:)`
@@ -106,7 +106,7 @@ override func viewDidLoad() {
         task.resume()
     }
 ```
-> - `UnsafeContinuation` is basically the same kind of object that forms the basis of the `await` keyword itself. 
+> `UnsafeContinuation` is basically the same kind of object that forms the basis of the `await` keyword itself. 
 - when we wait for an async function call using `await`, a continuation object is created and stored behind the scenes 
 - when the async function finishes, a method of that continuation object is called, and our code resumes. So what we’re doing in this wrapper method is enacting manually the same sort of wait-and-resume architecture that is performed for us automatically when we say `await`.
 
@@ -306,7 +306,8 @@ If using `AsyncStream` instead of `AsyncThrowingStream`, it accepts 1 parameter 
 
 `func download(_ url: URL) -> AsyncStream<Status> {}`
 
-Learned from
+--- 
+🙏🏻📚 Learned from
 1. https://docs.swift.org/swift-book/LanguageGuide/Concurrency.html
 2. https://www.avanderlee.com/swift/async-await/
 3. https://www.avanderlee.com/swift/async-let-asynchronous-functions-in-parallel/
