@@ -110,6 +110,9 @@ override func viewDidLoad() {
 - when we wait for an async function call using `await`, a continuation object is created and stored behind the scenes 
 - when the async function finishes, a method of that continuation object is called, and our code resumes. So what we’re doing in this wrapper method is enacting manually the same sort of wait-and-resume architecture that is performed for us automatically when we say `await`.
 
+**Continuation**?
+A mechanism to interface between synchronous code and an asynchronous stream
+
 ## Do multiple concurrent tasks with `async let`
 Don't do this, it is serial, not concurrent:
 ```swift
@@ -204,33 +207,107 @@ func fetchData(from urls: [URL]) async throws -> [URL: Data] {
         return result
     }
 ```
-A cleaner code 🐣
+Full code 🐣
 ```swift
 func fetchData(from urls: [URL]) async throws -> [URL: Data] {
-    var result: [URL: Data] = [:]
-    return try await withThrowingTaskGroup(of: [URL: Data].self, returning: [URL: Data].self) { group in
-        for url in urls {
-            group.addTask {
-                // this return here have to match with `of` type
-                return [url: try await self.download(url: url)]
-            }
-        }
-            
-        for try await dictionaryData in group {
-            // merge dictionaryData to result dictionary
-            // if there is a duplicate key, keep the key of result
-            result.merge(dictionaryData) { current, _ in current }
-        }
-            
-        return result
-    }    
-       
-}
+        var result: [URL: Data] = [:]
         
+        return try await withThrowingTaskGroup(of: [URL: Data].self, returning: [URL: Data].self) { group in
+            for url in urls {
+                group.addTask {
+                    // this return here have to match with `of` type
+                    return [url: try await self.download(url: url)]
+                }
+            }
+            
+            for try await dictionaryData in group {
+                // merge dictionaryData to result dictionary
+                // if there is a duplicate key, keep the key of result
+                result.merge(dictionaryData) { current, _ in current }
+            }
+            
+            return result
+        }
+    }
 ```
 - specify `returning`, denoting that this block will return with the type of `returning` ([URL: Data] dictionary as above)
+
+## Asynchronous Sequence
+- task group as above is an asynchronous sequence
+- an asynchronous sequence is a type that conforms to `AsyncSequence` protocol
+- values of an asynchronous sequence are generated ASYNCHRONOUSLY
+> An AsyncSequence may have all, some, or none of its values available when you first use it. Instead, you use await to receive values as they become available.
+- `for await` loop pauses after each iteration → resumes when the next value of the sequence is generated → performing another iteration → waiting again, until the sequence signals that it has terminated.
+
+### Create an Asynchronous Sequence
+#### use the `AsyncStream` initializer (or AsyncThrowingStream)
+- as a stream of elements that could potentially result in a thrown error. 
+- values deliver over time, and the stream can be closed by a finish event.
+- a finish event could either be a success ✅ or a failure ❌ once an error occurs.
+
+> An asynchronous sequence generated from a closure that calls a continuation
+> - `AsyncStream` conforms to `AsyncSequence`, providing a convenient way to create an asynchronous sequence without manually implementing an asynchronous iterator. 
+> - In particular, an asynchronous stream is well-suited to adapt CALLBACK- or DELEGATION-based APIs to participate with `async`-`await`.
+
+```swift
+class TextFieldStreamer: NSObject, UITextFieldDelegate {
+    var values: AsyncStream<UITextField>
+    var continuation: AsyncStream<UITextField>.Continuation?
+    
+    override init() {
+        var myContinuation: AsyncStream<UITextField>.Continuation?
+        self.values = AsyncStream { continuation in
+            myContinuation = continuation
+        }
+        super.init()
+        self.continuation = myContinuation
+    }
+    
+    func textFieldDidChangeSelection(_ textField: UITextField) {
+        self.continuation?.yield(textField)
+    }
+}
+
+/// USAGE
+textField.delegate = self.textFieldStreamer
+Task {
+	for await textField in textFieldStreamer.values {
+		print(textField.text ?? "")
+	}
+}
+```
+
+Another example from avanderlee.com, function download return an async sequence with value of type `Status`
+```swift
+extension FileDownloader {
+    func download(_ url: URL) -> AsyncThrowingStream<Status, Error> {
+        return AsyncThrowingStream { continuation in
+            do {
+                try self.download(url, progressHandler: { progress in
+                    continuation.yield(.downloading(progress))
+                }, completion: { result in
+                    switch result {
+                    case .success(let data):
+                        continuation.yield(.finished(data))
+                        continuation.finish()
+                    case .failure(let error):
+                        continuation.finish(throwing: error)
+                    }
+                })
+            } catch {
+                continuation.finish(throwing: error)
+            }
+        }
+    }
+}
+```
+☝
+If using `AsyncStream` instead of `AsyncThrowingStream`, it accepts 1 parameter only and cannot finish with error as `continuation.finish(throwing: error)`
+
+`func download(_ url: URL) -> AsyncStream<Status> {}`
 
 Learned from
 1. https://docs.swift.org/swift-book/LanguageGuide/Concurrency.html
 2. https://www.avanderlee.com/swift/async-await/
 3. https://www.avanderlee.com/swift/async-let-asynchronous-functions-in-parallel/
+4. https://www.avanderlee.com/swift/asyncthrowingstream-asyncstream/
