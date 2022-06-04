@@ -31,39 +31,51 @@ e.g. call `download(from:)` in `viewDidLoad()` of `UIViewController`
 
 👇
 ## Tasks
-This is `a unit of asynchronous work`
+- This is `a unit of asynchronous work`
+- Call `Task.init(operation:)`, it *inherits* the characteristics of its surroundings
 ```swift
+// ✅  RUN ON MAIN THREAD
 override func viewDidLoad() {
-        super.viewDidLoad()
-        
-        let imgUrl = "https://cdn.pixabay.com/photo/2015/04/23/22/00/tree-736885__480.jpg"
-        Task {
-            do {
-                let data = try await download(url: URL(string: imgUrl)!)
-                print(data)
-            } catch(let error) {
-                print(error.localizedDescription)
-            }
-        }
-        print(imgUrl)
-    }
+    super.viewDidLoad()
     
-    func download(url: URL) async throws -> Data {
-        let result = try await URLSession.shared.data(from: url)
-        return result.0 // the response data
+    Task {
+    // ✅ STILL RUN ON MAIN THREAD
+        do {
+            let imgUrl = "https://cdn.pixabay.com/photo/2015/04/23/22/00/tree-736885__480.jpg"
+            let data = try await download(url: URL(string: imgUrl)!)
+            print(data)
+        } catch(let error) {
+            print(error.localizedDescription)
+        }
     }
+    print(imgUrl)
+}
+
+func download(url: URL) async throws -> Data {
+    let result = try await URLSession.shared.data(from: url)
+    return result.0 // the response data
+}
 	
-	///  CONSOLE
-	https://cdn.pixabay.com/photo/2015/04/23/22/00/tree-736885__480.jpg
-	44304 bytes
+///  CONSOLE
+https://cdn.pixabay.com/photo/2015/04/23/22/00/tree-736885__480.jpg
+44304 bytes
 ```
-
-**Want to adopt structured concurrency but keep old-fashioned async code based on completion handler?**
-
-👇
+- Call `Task.detached(operation:)`, it cuts off relationship to the surrounding context, running on its own background thread
+```swift
+// ✅  RUN ON MAIN THREAD
+override func viewDidLoad() {
+    super.viewDidLoad()
+    
+    Task.detached {
+        // ❇️ NOW, RUN ON BACKGROUND THREAD
+        ...
+    }
+    print(imgUrl)
+}
+```
 ## Wrapping a Completion Handler
-
-wrapping with 
+⁉️*Want to adopt structured concurrency but keep old-fashioned async code based on completion handler?*
+✅ Wrap it with 
 - `withUnsafeContinuation(_:)`
 - `withUnsafeThrowingContinuation(_:)`
 - `withCheckedContinuation(_:)`
@@ -71,40 +83,40 @@ wrapping with
 
 ```swift
 override func viewDidLoad() {
-        super.viewDidLoad()
-        
-        let imgUrl = "https://cdn.pixabay.com/photo/2015/04/23/22/00/tree-736885__480.jpg"
-        Task {
-            do {
-                let data = try await download(url: URL(string: imgUrl)!)
-                print(data)
-            } catch(let error) {
-                print(error.localizedDescription)
-            }
+    super.viewDidLoad()
+    
+    let imgUrl = "https://cdn.pixabay.com/photo/2015/04/23/22/00/tree-736885__480.jpg"
+    Task {
+        do {
+            let data = try await download(url: URL(string: imgUrl)!)
+            print(data)
+        } catch(let error) {
+            print(error.localizedDescription)
         }
-        print(imgUrl)
+    }
+    print(imgUrl)
+}
+
+func download(url: URL) async throws -> Data {
+    return try await withUnsafeThrowingContinuation { continuation in
+        download(url: url) { data in
+            continuation.resume(returning: data) // ⚠️ call resume ONLY ONCE
+        }
     }
     
-    func download(url: URL) async throws -> Data {
-        return try await withUnsafeThrowingContinuation { continuation in
-            download(url: url) { data in
-                continuation.resume(returning: data) // ⚠️ call resume ONLY ONCE
-            }
-        }
-        
 //        let result = try await URLSession.shared.data(from: url)
 //        return result.0 // the response data
-    }
-    
-	// The old-fashion async functino with completion handler
-    func download(url: URL, completionHandler: @escaping (Data) -> ()) {
-        let task = URLSession.shared.dataTask(with: url) { data, _, error in
-            if let data = data {
-                completionHandler(data)
-            }
+}
+
+// The old-fashion async functino with completion handler
+func download(url: URL, completionHandler: @escaping (Data) -> ()) {
+    let task = URLSession.shared.dataTask(with: url) { data, _, error in
+        if let data = data {
+            completionHandler(data)
         }
-        task.resume()
     }
+    task.resume()
+}
 ```
 > `UnsafeContinuation` is basically the same kind of object that forms the basis of the `await` keyword itself. 
 - when we wait for an async function call using `await`, a continuation object is created and stored behind the scenes 
@@ -146,14 +158,15 @@ func fetchTwoURLs() async throws -> (Data, Data) {
 //    async let data1 = self.download(url: url1) /// (1)
 //    async let data2 = self.download(url: url2) /// (2)
 
-	   async let data1 = {
-            return try await download(url: url1)
-        }()
         
-        async let data2 = {
-            return try await download(url: url2)
-        }()
-
+    async let data1 = {         
+        return try await download(url: url1)
+    }()
+                     
+    async let data2 = {
+        return try await download(url: url2)
+    }()    
+    
     return (try await data1, try await data2) /// try wait (data1, data2)
 }
 ```
@@ -165,70 +178,70 @@ use 1 of these 2 methods:
 e.g.:
 ```swift
 func fetchData(from urls: [URL]) async throws -> [Data] {
-        var result: [Data] = []
-		
-        try await withThrowingTaskGroup(of: Data.self) { group in
-            for url in urls {
-                group.addTask {
-                    return try await self.download(url: url)
-                }
-            }
-            
-			// loop through the group as an async sequence
-			// get the value from each subtasks and append to the list result.
-            for try await data in group {
-                result.append(data)
+    var result: [Data] = []
+    
+    try await withThrowingTaskGroup(of: Data.self) { group in
+        for url in urls {
+            group.addTask {
+                return try await self.download(url: url)
             }
         }
-        return result
+        
+        // loop through the group as an async sequence
+        // get the value from each subtasks and append to the list result.
+        for try await data in group {
+            result.append(data)
+        }
     }
+    return result
+}
 ```
 ... But result is not in order as the url array that being passed in because it is concurrent.
 so rather than return an array, we return a dictionary.
 ```swift
 func fetchData(from urls: [URL]) async throws -> [URL: Data] {
-        var result: [URL: Data] = [:]
-        
-        try await withThrowingTaskGroup(of: [URL: Data].self) { group in
-            for url in urls {
-                group.addTask {
-                    // this return here have to match with `of` type
-                    return [url: try await self.download(url: url)]
-                }
-            }
-            
-            for try await dictionaryData in group {
-                // merge dictionaryData to result dictionary
-                // if there is a duplicate key, keep the key of result
-                result.merge(dictionaryData) { current, _ in current }
+    var result: [URL: Data] = [:]
+    
+    try await withThrowingTaskGroup(of: [URL: Data].self) { group in
+        for url in urls {
+            group.addTask {
+                // this return here have to match with `of` type
+                return [url: try await self.download(url: url)]
             }
         }
         
-        return result
+        for try await dictionaryData in group {
+            // merge dictionaryData to result dictionary
+            // if there is a duplicate key, keep the key of result
+            result.merge(dictionaryData) { current, _ in current }
+        }
     }
+    
+    return result
+}
 ```
 Full code 🐣
 ```swift
 func fetchData(from urls: [URL]) async throws -> [URL: Data] {
-        var result: [URL: Data] = [:]
-        
-        return try await withThrowingTaskGroup(of: [URL: Data].self, returning: [URL: Data].self) { group in
-            for url in urls {
-                group.addTask {
-                    // this return here have to match with `of` type
-                    return [url: try await self.download(url: url)]
-                }
+    var result: [URL: Data] = [:]
+    
+    return try await withThrowingTaskGroup(of: [URL: Data].self, returning: [URL: Data].self) { group in
+        for url in urls {
+            group.addTask {
+                // this return here have to match with `of` type
+                return [url: try await self.download(url: url)]
             }
-            
-            for try await dictionaryData in group {
-                // merge dictionaryData to result dictionary
-                // if there is a duplicate key, keep the key of result
-                result.merge(dictionaryData) { current, _ in current }
-            }
-            
-            return result
         }
+        
+        for try await dictionaryData in group {
+            // merge dictionaryData to result dictionary
+            // if there is a duplicate key, keep the key of result
+            result.merge(dictionaryData) { current, _ in current }
+        }
+        
+        return result
     }
+}
 ```
 - specify `returning`, denoting that this block will return with the type of `returning` ([URL: Data] dictionary as above)
 
@@ -306,6 +319,71 @@ If using `AsyncStream` instead of `AsyncThrowingStream`, it accepts 1 parameter 
 
 `func download(_ url: URL) -> AsyncStream<Status> {}`
 
+---
+## Actors
+- Kind object type, on a par with `enum`, `class`, `struct`
+- It is a **reference type** like a `class`
+- Actor's code run on *background* by default, it has *isolation domain*, which helps multithreaded code run safely.
+### Actor Isolation
+1. if an actor instance have *mutable property* (`var`), only that instance can mutate it.
+2. Can access actor's **property**, but this access is *asynchronous*, must use `await`
+3. Can call actor's **method**, but this access is *asynchronous*, must use `await` (even if it is not an `async` method)
+
+Why `await`❓ To make sure, no other code belonging to the same actor can start, solves the problem of simultaneous access. With an actor, there is no simultaneous access. Access to an actor is serialized. ✅
+
+```swift
+actor MyActor {
+    
+    let id = UUID().uuidString 
+    var actorProperty: String
+    
+    init(actorProperty: String) {
+        self.actorProperty = actorProperty
+    }
+    
+    func mutateProperty(_ newValue: String) {
+        self.actorProperty = newValue
+    }
+}
+
+let actor = MyActor(actorProperty: "MyActor")
+let id = actor.id // ✅ id is constant value, can directly access
+let property = actor.actorProperty // ⛔️🆘 Actor-isolated property, must use `await`
+actor.actorProperty = "Vietnam" // ⛔️🆘 it is not allowed, refer (1) above
+
+Task {
+    let property = await actor.actorProperty // ✅ look good now
+    await actor.mutateProperty("Vietnam") // ✅ it is legal
+}
+```
+
+## Main Actor
+- Isolate code to main actor, it will run on main thread
+- How? Use `@MainActor` directive on:
+  - *property* (static/class/instance property) 👉 only be accessed on main thread
+  - *method* (static/class/instance property) 👉 only be called on main thread
+  - *a type (class, struct, enum)* 👉 all of its properties and methods are only accessed only on the main thread.
+  - *global variable or function* 
+   
+```swift
+  actor MyActor {
+    
+    let id = UUID().uuidString
+    @MainActor var actorProperty: String
+    
+    init(actorProperty: String) {
+        self.actorProperty = actorProperty
+    }
+    
+    @MainActor func mutateProperty(_ newValue: String) {
+        self.actorProperty = newValue
+    }
+}
+
+print(actor.actorProperty) // ✅ now can be access it on Main thread without `await`
+actor.mutateProperty("Vietnam") // ✅ it is legal 
+actor.actorProperty = "Hochiminh city" // ✅ it is legal, can be mutate directly
+```
 --- 
 🙏🏻📚 Learned from
 1. https://docs.swift.org/swift-book/LanguageGuide/Concurrency.html
