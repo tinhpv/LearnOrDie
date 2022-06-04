@@ -361,12 +361,12 @@ Task {
 - Isolate code to main actor, it will run on main thread
 - How? Use `@MainActor` directive on:
   - *property* (static/class/instance property) 👉 only be accessed on main thread
-  - *method* (static/class/instance property) 👉 only be called on main thread
+  - *closure*, *method* (static/class/instance property) 👉 only be called on main thread
   - *a type (class, struct, enum)* 👉 all of its properties and methods are only accessed only on the main thread.
   - *global variable or function* 
    
 ```swift
-  actor MyActor {
+actor MyActor {
     
     let id = UUID().uuidString
     @MainActor var actorProperty: String
@@ -384,6 +384,35 @@ print(actor.actorProperty) // ✅ now can be access it on Main thread without `a
 actor.mutateProperty("Vietnam") // ✅ it is legal 
 actor.actorProperty = "Hochiminh city" // ✅ it is legal, can be mutate directly
 ```
+
+⁉️ *Switching context from background thread to main thread for updating UI?*
+MainActor has an extension
+
+```swift
+@available(macOS 12.0, iOS 15.0, watchOS 8.0, tvOS 15.0, *)
+extension MainActor {
+
+    /// Execute the given body closure on the main actor.
+    public static func run<T>(resultType: T.Type = T.self, body: @MainActor @Sendable () throws -> T) async rethrows -> T
+}
+```
+
+Usage:
+```swift
+let imgUrl = "https://cdn.pixabay.com/photo/2015/04/23/22/00/tree-736885__480.jpg"
+Task.detached {
+    do {
+        let data = try await self.download(url: URL(string: imgUrl)!)
+        await MainActor.run {
+            self.image1.image = UIImage(data: data)
+        }
+    } catch(let error) {
+        print(error.localizedDescription)
+    }
+}
+```
+        
+
 --- 
 🙏🏻📚 Learned from
 1. https://docs.swift.org/swift-book/LanguageGuide/Concurrency.html
