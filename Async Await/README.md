@@ -75,6 +75,7 @@ override func viewDidLoad() {
 ```
 ## Wrapping a Completion Handler
 ⁉️*Want to adopt structured concurrency but keep old-fashioned async code based on completion handler?*
+
 ✅ Wrap it with 
 - `withUnsafeContinuation(_:)`
 - `withUnsafeThrowingContinuation(_:)`
