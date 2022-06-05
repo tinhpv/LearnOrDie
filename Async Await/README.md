@@ -358,6 +358,36 @@ Task {
 }
 ```
 
+### Another case, `nonisolated` access
+- Add new function to actor, called `printMyId`
+- This function print a constant property of `MyActor` but when calling it outside, still required `await`
+- This is odd, so `nonisolated` comes into place to tell XCode that we don't access any isolated data.
+
+```swift
+actor MyActor {
+    
+    let id = UUID().uuidString 
+    var actorProperty: String
+    
+    init(actorProperty: String) {
+        self.actorProperty = actorProperty
+    }
+    
+    func mutateProperty(_ newValue: String) {
+        self.actorProperty = newValue
+    }
+    
+    nonisolatedfunc printMyId() { // ❇️ new one, access IMMUTABLE property `id`
+        print(id)
+    }
+}
+
+let actor = MyActor(actorProperty: "MyActor")
+let id = actor.id // ✅ id is constant value, can directly access
+actor.printMyId() // ✅ legal, don't need await since it is marked as `nonisolated`
+```
+
+
 ## Main Actor
 - Isolate code to main actor, it will run on main thread
 - How? Use `@MainActor` directive on:
