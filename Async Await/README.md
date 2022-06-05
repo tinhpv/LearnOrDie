@@ -452,3 +452,4 @@ Task.detached {
 2. https://www.avanderlee.com/swift/async-await/
 3. https://www.avanderlee.com/swift/async-let-asynchronous-functions-in-parallel/
 4. https://www.avanderlee.com/swift/asyncthrowingstream-asyncstream/
+5. https://www.avanderlee.com/swift/actors/
