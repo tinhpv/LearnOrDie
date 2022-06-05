@@ -34,12 +34,12 @@ e.g. call `download(from:)` in `viewDidLoad()` of `UIViewController`
 - This is `a unit of asynchronous work`
 - Call `Task.init(operation:)`, it *inherits* the characteristics of its surroundings
 ```swift
-// ✅  RUN ON MAIN THREAD
+// Ⓜ️  RUN ON MAIN THREAD
 override func viewDidLoad() {
     super.viewDidLoad()
     
     Task {
-    // ✅ STILL RUN ON MAIN THREAD
+    // Ⓜ️ STILL RUN ON MAIN THREAD
         do {
             let imgUrl = "https://cdn.pixabay.com/photo/2015/04/23/22/00/tree-736885__480.jpg"
             let data = try await download(url: URL(string: imgUrl)!)
@@ -62,12 +62,12 @@ https://cdn.pixabay.com/photo/2015/04/23/22/00/tree-736885__480.jpg
 ```
 - Call `Task.detached(operation:)`, it cuts off relationship to the surrounding context, running on its own background thread
 ```swift
-// ✅  RUN ON MAIN THREAD
+// Ⓜ️ RUN ON MAIN THREAD
 override func viewDidLoad() {
     super.viewDidLoad()
     
     Task.detached {
-        // ❇️ NOW, RUN ON BACKGROUND THREAD
+        // 🅱️ NOW, RUN ON BACKGROUND THREAD
         ...
     }
     print(imgUrl)
@@ -402,7 +402,7 @@ Usage:
 ```swift
 let imgUrl = "https://cdn.pixabay.com/photo/2015/04/23/22/00/tree-736885__480.jpg"
 Task.detached {
-    🅱️ Run on background thread 
+    // 🅱️ Run on background thread 
     do {
         let data = try await self.download(url: URL(string: imgUrl)!)
         await MainActor.run {
