@@ -358,7 +358,7 @@ Task {
 }
 ```
 
-### Another case, `nonisolated` access
+### `nonisolated` access
 - Add new function to actor, called `printMyId`
 - This function print a constant property of `MyActor` but when calling it outside, still required `await`
 - This is odd, so `nonisolated` comes into place to tell XCode that we don't access any isolated data.
@@ -387,6 +387,41 @@ let id = actor.id // ✅ id is constant value, can directly access
 actor.printMyId() // ✅ legal, don't need await since it is marked as `nonisolated`
 ```
 
+### Keyword `isolated`
+In case a function inside an actor accepts actor as a parameter... what happen?
+
+```swift
+actor MyActor {
+    
+    let id = UUID().uuidString
+    var actorProperty: String
+    
+    init(actorProperty: String) {
+        self.actorProperty = actorProperty
+    }
+    
+    func mutateProperty(_ newValue: String) {
+        self.actorProperty = newValue
+    }
+    
+    nonisolated func printMyId() {
+        print(id)
+    }
+    
+    func changeIsolatedData(actor: MyActor) { // ⁉️ Newly added this func
+        actor.actorProperty = "New Value"
+    }
+}
+```
+- `changeIsolatedData()` function accepts an actor as a parameter
+- Xcode is not happy with this line `actor.actorProperty = "New Value"` and it says "*Actor-isolated property 'actorProperty' can not be mutated on a non-isolated actor instance*"
+- Solution: use `isolated` keyword before `MyActor` type
+```swift
+func changeIsolatedData(on actor: isolated MyActor) {
+    actor.actorProperty = "New Value"
+}
+```
+- It binds this method to `MyActor` isolation domain
 
 ## Main Actor
 - Isolate code to main actor, it will run on main thread
