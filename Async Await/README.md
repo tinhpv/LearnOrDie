@@ -377,7 +377,7 @@ actor MyActor {
         self.actorProperty = newValue
     }
     
-    nonisolatedfunc printMyId() { // ❇️ new one, access IMMUTABLE property `id`
+    nonisolated func printMyId() { // ❇️ new one, access IMMUTABLE property `id`
         print(id)
     }
 }
