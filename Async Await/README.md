@@ -285,9 +285,9 @@ class TextFieldStreamer: NSObject, UITextFieldDelegate {
 /// USAGE
 textField.delegate = self.textFieldStreamer
 Task {
-	for await textField in textFieldStreamer.values {
-		print(textField.text ?? "")
-	}
+     for await textField in textFieldStreamer.values {
+	 print(textField.text ?? "")
+     }
 }
 ```
 
@@ -402,9 +402,11 @@ Usage:
 ```swift
 let imgUrl = "https://cdn.pixabay.com/photo/2015/04/23/22/00/tree-736885__480.jpg"
 Task.detached {
+    🅱️ Run on background thread 
     do {
         let data = try await self.download(url: URL(string: imgUrl)!)
         await MainActor.run {
+	    // Ⓜ️ Now, switched to Main thread
             self.image1.image = UIImage(data: data)
         }
     } catch(let error) {
