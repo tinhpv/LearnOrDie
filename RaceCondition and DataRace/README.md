@@ -7,6 +7,7 @@ Data Race and Race Condition are **DIFFERENT**
 
 Example:
  ```swift
+ @discardableResult
  func transfer(amount: Int, from source: BankAccount, to destination: BankAccount) -> Bool {
     if source.balance >= amount {
         destination.balance += amount
@@ -18,32 +19,65 @@ Example:
 ```
 🔵 **LET'S RUN ON ONE-SINGLE THREAD**
 ```swift
-let firstBank = BankAccount(balance: 100)
-let secondBank = BankAccount(balance: 100)
-transfer(amount: 50, from: firstBank, to: secondBank)
+let accountA = BankAccount(balance: 100)
+let accountB = BankAccount(balance: 100)
 
-print(firstBank.balance) // 5️⃣0️⃣
-print(secondBank.balance) // 1️⃣5️⃣0️⃣️
+transfer(amount: 50, from: accountA, to: accountB)
+
+print(accountA.balance) // 5️⃣0️⃣
+print(accountB.balance) // 1️⃣5️⃣0️⃣️
  ```
  It makes sense! ✅
  
 🔴 **LET'S RUN ON MULTIPLE THREADS**
 ```swift
-let firstBank = BankAccount(balance: 100)
-let secondBank = BankAccount(balance: 100)
-transfer(amount: 50, from: firstBank, to: secondBank) // run on thread (1)
-transfer(amount: 70, from: firstBank, to: secondBank) // run on thread (2)
+let accountA = BankAccount(balance: 1000)
+let accountB = BankAccount(balance: 2000)
 
-// if (1) goes first
-print(firstBank.balance) // 5️⃣0️⃣
-print(secondBank.balance) // 1️⃣5️⃣0️⃣️
-
-// but if (2) goes first
-print(firstBank.balance) // 3️⃣0️⃣
-print(secondBank.balance) // 1️⃣7️⃣0️⃣️
+...
+@IBAction private func transferButtonTapped() {
+    let group = DispatchGroup()
+    for _ in 1...5 {
+        DispatchQueue.global().async(group: group) {
+            self.transfer(amount: 50, from: self.accountA, to: self.accountB)
+        }
+    }
+    
+    group.notify(queue: DispatchQueue.main) {
+        self.labelAccountA.text = "\(self.accountA.balance)"
+        self.labelAccountB.text = "\(self.accountB.balance)"
+    }
+}
+...
 ```
-- ONLY mention about the ORDER of execution, (1) goes first or (2) goes first lead to 2 different outcomes
-- IN REALITY, while (1) is checking the condition and execute `destination.balance += amount` (we suppose), thread (2) is also going through these steps and unexpectedly modify the same data → the outcome is unpredictable and can even cause crash 😫
+
+We will get a warning ⛔️ in `transfer(amount:from:to)` with the help of Thread Sanitizer as 
+`Data race in *.ViewController.transfer(amount: Swift.Int, from: BankAccount, to: BankAccount) -> Swift.Bool at 0x7b080002f8e0`
+
+- ONLY mention about the ORDER of execution, which thread goes first will lead to different outcomes
+- IN REALITY, while a thread is checking the condition and execute `destination.balance += amount` (we suppose), other threads is also going through these steps and unexpectedly modify the same data → the outcome is unpredictable and can even cause crash 😫
+
+### Solutions
+#### GCD to solve Data-Race
+Using a serial queue, guarantee only one thread access balances
+Data-race is now addressed!
+⚠️ Race-condition is still able to happen, cannot manage the order of execution of threads. But it won't break the app, which is acceptable!
+```swift
+let serialQueue = DispatchQueue(label: "serial.queue")
+
+@discardableResult
+func transfer(amount: Int, from source: BankAccount, to destination: BankAccount) -> Bool {
+    serialQueue.sync {
+        if source.balance >= amount {
+            destination.balance += amount
+            source.balance -= amount
+            return
+        }
+        
+        return false
+    }
+}
+```
 
 📚 Learned from:
 1. https://www.swiftbysundell.com/articles/avoiding-race-conditions-in-swift/
