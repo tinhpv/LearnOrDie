@@ -323,10 +323,12 @@ If using `AsyncStream` instead of `AsyncThrowingStream`, it accepts 1 parameter 
 ---
 ## Actors
 - Kind object type, on a par with `enum`, `class`, `struct`
-- It is a **reference type** like a `class`
-- Actor's code run on *background* by default, it has *isolation domain*, which helps multithreaded code run safely.
+- Actor is a **reference type**, like a `class`, can inherit from other actors, conforms to protocol, be generics, and be used with generics
+- Actor has *isolation domain*, which helps in protecting mutable state, prevent data races.
+- Actor's code run on *background* by default 
+
 ### Actor Isolation
-1. if an actor instance have *mutable property* (`var`), only that instance can mutate it.
+1. If an actor instance have *mutable property* (`var`), only that instance can mutate it. (on `self` only)
 2. Can access actor's **property**, but this access is *asynchronous*, must use `await`
 3. Can call actor's **method**, but this access is *asynchronous*, must use `await` (even if it is not an `async` method)
 
@@ -413,7 +415,7 @@ actor MyActor {
     }
 }
 ```
-- `changeIsolatedData()` function accepts an actor as a parameter
+- `changeIsolatedData()` function accepts an actor as a parameter, this is called `cross-actor reference` 
 - Xcode is not happy with this line `actor.actorProperty = "New Value"` and it says "*Actor-isolated property 'actorProperty' can not be mutated on a non-isolated actor instance*"
 - Solution: use `isolated` keyword before `MyActor` type
 ```swift
