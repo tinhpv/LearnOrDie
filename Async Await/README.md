@@ -253,6 +253,19 @@ func fetchData(from urls: [URL]) async throws -> [URL: Data] {
 > An AsyncSequence may have all, some, or none of its values available when you first use it. Instead, you use await to receive values as they become available.
 - `for await` loop pauses after each iteration → resumes when the next value of the sequence is generated → performing another iteration → waiting again, until the sequence signals that it has terminated.
 
+```swift
+for try await item in asyncSequence {
+  // Next item from `asyncSequence`
+}
+```
+or using standard library iterator
+```swift
+var iterator = asyncSequence.makeAsyncIterator()
+while let item = try await iterator.next() {
+   // ...
+}
+```
+
 ### Create an Asynchronous Sequence
 #### use the `AsyncStream` initializer (or AsyncThrowingStream)
 - as a stream of elements that could potentially result in a thrown error. 
