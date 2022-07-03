@@ -9,5 +9,5 @@ I just note down what I learned by my own to be easier to remember 💆🤷‍
 5. [Grand Central Dispatch](https://github.com/tinhpv/learning-ios/tree/main/GCD "Grand Central Dispatch") 
 6. [Memory](https://github.com/tinhpv/learning-ios/tree/main/Memory "Memory")
 7. [Async/Await - AsyncSequence](https://github.com/tinhpv/swift-note-down/tree/main/Async%20Await "Async/Await - AsyncSequence - Actor") 
-8. [Actor](https://github.com/tinhpv/swift-note-down/blob/main/Actor/actor.md "Actor")
+8. [Actor](https://github.com/tinhpv/swift-note-down/blob/main/Actor/actor "Actor")
 9. [Data-Race vs Race-Condition ⛔️](https://github.com/tinhpv/swift-note-down/tree/main/RaceCondition%20and%20DataRace "Data-Race vs Race-Condition")
