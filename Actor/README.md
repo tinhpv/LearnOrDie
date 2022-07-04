@@ -213,17 +213,27 @@ Task.detached {
 ```
 
 ## Global Actor
-- to make an actor a **global** actor, mark it with `@globalActor`, will automatically conform to `GlobalActor` protocol
-- must have a static property `shared`, expose the actor instance that is globally accessible.
+- global actor type can be **final** class, struct, enum or actor
+- to make a **global** actor, mark it with `@globalActor`, will automatically conform to `GlobalActor` protocol
+- must have a static property `shared` to share actor instance.
 
 ```swift
-@globalActor actor MyActor {
+@globalActor 
+actor MyActor {
     static let shared = MyActor()
     ...
 }
 ```
 
-as `@MainActor`, add **@-prefixed annotation** to automatically **execute methods on that *custom* global actor**
+- The main actor is a global actor that describes the main thread
+```swift
+@globalActor
+public actor MainActor {
+  public static let shared = MainActor(...)
+}
+```
+
+as `@MainActor`, add **@-prefixed annotation** to **isolate methods to that *custom* global actor**
 → 💊 So, to avoid data races, just make the relavant methods run on the global actor
 
 e.g.: 
@@ -246,6 +256,22 @@ e.g.:
     }
 }
 ```
+
+- Can isolate a closure to global actor:
+```swift
+callback = { @MyActor in
+  print($0)
+}
+
+callback = { @MyActor (i) in 
+  print(i)
+}
+
+Task.detached { @MainActor in
+  // this is going to be run main thread... as DispatchQueue.main.async {}
+}
+```
+
 
 
 
