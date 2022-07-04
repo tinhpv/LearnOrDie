@@ -211,3 +211,45 @@ Task.detached {
     }
 }
 ```
+
+## Global Actor
+- to make an actor a **global** actor, mark it with `@globalActor`, will automatically conform to `GlobalActor` protocol
+- must have a static property `shared`, expose the actor instance that is globally accessible.
+
+```swift
+@globalActor actor MyActor {
+    static let shared = MyActor()
+    ...
+}
+```
+
+as `@MainActor`, add **@-prefixed annotation** to automatically **execute methods on that *custom* global actor**
+→ 💊 So, to avoid data races, just make the relavant methods run on the global actor
+
+e.g.: 
+```swift
+@MyActor func doSomething() {
+    // this method will be execute on MyActor global actor
+}
+```
+
+Can also annotate on the whole type to make all methods of that type run on the actor, safely share mutable state
+e.g.:
+```swift
+@MyActor class ExampleStorage {
+    func write(data: Data, key: String) {
+        ...
+    }
+    
+    func read(key: String) -> Data {
+        ...
+    }
+}
+```
+
+
+
+
+
+
+
